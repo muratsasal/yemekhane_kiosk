@@ -1,4 +1,4 @@
-﻿package com.cinarli.yemekhane.kiosk;
+package com.cinarli.yemekhane.kiosk;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,38 +16,34 @@ public class BootReceiver extends BroadcastReceiver {
         }
 
         String action = intent.getAction();
-        Log.i(TAG, "Boot event alindi: " + action);
+        Log.i(TAG, "Boot olayi yakalandi: " + action);
 
-        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
-                || "android.intent.action.QUICKBOOT_POWERON".equals(action)
-                || "com.htc.intent.action.QUICKBOOT_POWERON".equals(action)
-                || Intent.ACTION_REBOOT.equals(action)) {
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
+            "android.intent.action.QUICKBOOT_POWERON".equals(action) ||
+            "com.htc.intent.action.QUICKBOOT_POWERON".equals(action)) {
 
             PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakeLock = null;
             if (powerManager != null) {
-                wakeLock = powerManager.newWakeLock(
-                        PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                        "kiosk:boot_receiver"
+                PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
+                    PowerManager.FULL_WAKE_LOCK |
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP |
+                    PowerManager.ON_AFTER_RELEASE,
+                    "YemekNETKiosk:BootWakeLock"
                 );
-                wakeLock.acquire(10000); // 10 saniye boyunca kilit tut
+                wakeLock.acquire(10000);
             }
 
+            Intent kioskIntent = new Intent(context, MainActivity.class);
+            kioskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            kioskIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            kioskIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            
             try {
-                Intent launchIntent = new Intent(context, MainActivity.class);
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                context.startActivity(launchIntent);
-                Log.i(TAG, "MainActivity basariyla tetiklendi.");
+                context.startActivity(kioskIntent);
+                Log.i(TAG, "Kiosk MainActivity basariyla baslatildi.");
             } catch (Exception e) {
-                Log.e(TAG, "MainActivity baslatilirken hata olustu: " + e.getMessage(), e);
-            } finally {
-                if (wakeLock != null && wakeLock.isHeld()) {
-                    wakeLock.release();
-                }
+                Log.e(TAG, "MainActivity baslatilamadi: " + e.getMessage(), e);
             }
         }
     }
 }
-

@@ -1,4 +1,4 @@
-﻿package com.cinarli.yemekhane.kiosk;
+package com.cinarli.yemekhane.kiosk;
 
 import android.util.Log;
 
@@ -55,7 +55,7 @@ public class KioskHttpServer {
                         }
                     } catch (SocketException se) {
                         if (!isRunning) {
-                            break; // Normal kapatma sirasinda olusan istisna
+                            break;
                         }
                         Log.e(TAG, "Socket accept hatasi: " + se.getMessage());
                     } catch (IOException e) {
@@ -88,9 +88,9 @@ public class KioskHttpServer {
     }
 
     private void handleClient(Socket socket) {
-        try (socket;
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-             OutputStream out = socket.getOutputStream()) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            OutputStream out = socket.getOutputStream();
 
             String requestLine = reader.readLine();
             if (requestLine == null || requestLine.trim().isEmpty()) {
@@ -107,7 +107,6 @@ public class KioskHttpServer {
             String method = parts[0];
             String uri = parts[1];
 
-            // Sadece path kismini ayikla (query params varsa cikar)
             String path = uri.contains("?") ? uri.substring(0, uri.indexOf('?')) : uri;
 
             if (!"GET".equalsIgnoreCase(method)) {
@@ -144,7 +143,7 @@ public class KioskHttpServer {
                     break;
 
                 case "/":
-                    String welcome = "{\"app\":\"Cinarli Kiosk\",\"version\":\"1.0.0\",\"endpoints\":[\"/kapat\",\"/ac\",\"/yenile\",\"/durum\"]}";
+                    String welcome = "{\"app\":\"YemekNET Kiosk\",\"version\":\"1.0.0\",\"endpoints\":[\"/kapat\",\"/ac\",\"/yenile\",\"/durum\"]}";
                     sendResponse(out, 200, "application/json; charset=utf-8", welcome);
                     break;
 
@@ -155,6 +154,10 @@ public class KioskHttpServer {
 
         } catch (Exception e) {
             Log.e(TAG, "Client istegi islenirken hata: " + e.getMessage(), e);
+        } finally {
+            try {
+                socket.close();
+            } catch (Exception ignored) {}
         }
     }
 
@@ -173,4 +176,3 @@ public class KioskHttpServer {
         out.flush();
     }
 }
-
